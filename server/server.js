@@ -33,7 +33,9 @@ import Helmet from 'react-helmet';
 import routes from '../client/routes';
 import { fetchComponentData } from './util/fetchData';
 import posts from './routes/post.routes';
+import methods from './routes/method.routes';
 import dummyData from './dummyData';
+import methodData from './data/methodData';
 import serverConfig from './config';
 
 // Set native promises as mongoose promise
@@ -48,6 +50,7 @@ mongoose.connect(serverConfig.mongoURL, (error) => {
 
   // feed some dummy data in DB.
   dummyData();
+  methodData();
 });
 
 // Apply body Parser and server public assets and routes
@@ -56,6 +59,7 @@ app.use(bodyParser.json({ limit: '20mb' }));
 app.use(bodyParser.urlencoded({ limit: '20mb', extended: false }));
 app.use(Express.static(path.resolve(__dirname, '../dist')));
 app.use('/api', posts);
+app.use('/api', methods);
 
 // Render Initial HTML
 const renderFullPage = (html, initialState) => {

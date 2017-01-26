@@ -11,13 +11,15 @@ if (typeof require.ensure !== 'function') {
 }
 
 /* Workaround for async react routes to work with react-hot-reloader till
-  https://github.com/reactjs/react-router/issues/2182 and
-  https://github.com/gaearon/react-hot-loader/issues/288 is fixed.
+ https://github.com/reactjs/react-router/issues/2182 and
+ https://github.com/gaearon/react-hot-loader/issues/288 is fixed.
  */
 if (process.env.NODE_ENV !== 'production') {
   // Require async routes only in development for react-hot-reloader to work.
   require('./modules/Post/pages/PostListPage/PostListPage');
   require('./modules/Post/pages/PostDetailPage/PostDetailPage');
+  require('./pages/methods/MethodListPage');
+  require('./pages/homePage');
 }
 
 // react-router setup with code-splitting
@@ -27,7 +29,15 @@ export default (
     <IndexRoute
       getComponent={(nextState, cb) => {
         require.ensure([], require => {
-          cb(null, require('./modules/Post/pages/PostListPage/PostListPage').default);
+          cb(null, require('./pages/homePage').default);
+        });
+      }}
+    />
+    <Route
+      path="/methods"
+      getComponent={(nextState, cb) => {
+        require.ensure([], require => {
+          cb(null, require('./pages/methods/MethodListPage').default);
         });
       }}
     />
