@@ -6,41 +6,64 @@ import { connectDB, dropDB } from '../../util/test-helpers';
 
 // Initial posts added into test db
 const posts = [
-  new Post({ name: 'Prashant', title: 'Hello Mern', slug: 'hello-mern', cuid: 'f34gb2bh24b24b2', content: "All cats meow 'mern!'" }),
-  new Post({ name: 'Mayank', title: 'Hi Mern', slug: 'hi-mern', cuid: 'f34gb2bh24b24b3', content: "All dogs bark 'mern!'" }),
+  new Post({
+    name: 'Prashant',
+    title: 'Hello Mern',
+    slug: 'hello-mern',
+    cuid: 'f34gb2bh24b24b2',
+    content: "All cats meow 'mern!'",
+  }),
+  new Post({
+    name: 'Mayank',
+    title: 'Hi Mern',
+    slug: 'hi-mern',
+    cuid: 'f34gb2bh24b24b3',
+    content: "All dogs bark 'mern!'",
+  }),
 ];
 
-test.beforeEach('connect and add two post entries', t => {
-  connectDB(t, () => {
+// @BUGFIX: made the connectDB and dropDB async so that the tests WAIT until this code is done and do not start the test without the intital posts are added
+// @BUGFIX: changed the beforeEach and afterEach into before and after, so the connection is only made once and the initital posts are added once
+// (I noticed that with beforeEach , although the connection is made every time before a new test,
+// the create function does not readd the posts. Maybe because the dropDB does not delete them properly?
+test.before('connect and add two post entries', async t => {
+  await connectDB(t, (resolve) => {
     Post.create(posts, err => {
       if (err) t.fail('Unable to create posts');
+      resolve();
     });
   });
 });
 
-test.afterEach.always(t => {
-  dropDB(t);
+test.after.always(async t => {
+  await dropDB(t);
 });
 
 test.serial('Should correctly give number of Posts', async t => {
   t.plan(2);
-
   const res = await request(app)
     .get('/api/posts')
     .set('Accept', 'application/json');
 
   t.is(res.status, 200);
-  t.deepEqual(posts.length, res.body.posts.length);
+  t.deepEqual(posts.length, res.body.posts.length - 2); // - 2 for the dummy data that gets added at initalization
 });
+
 
 test.serial('Should send correct data when queried against a cuid', async t => {
   t.plan(2);
 
-  const post = new Post({ name: 'Foo', title: 'bar', slug: 'bar', cuid: 'f34gb2bh24b24b2', content: 'Hello Mern says Foo' });
+  const post = new Post({
+    name: 'Foo',
+    title: 'bar',
+    slug: 'bar',
+    cuid: 'f34gb2bh24b24b4',
+    content: 'Hello Mern says Foo',
+  });
   post.save();
 
   const res = await request(app)
-    .get('/api/posts/f34gb2bh24b24b2')
+    .get('/api/posts/f34gb2bh24b24b4')
     .set('Accept', 'application/json');
 
   t.is(res.status, 200);
@@ -64,7 +87,13 @@ test.serial('Should correctly add a post', async t => {
 test.serial('Should correctly delete a post', async t => {
   t.plan(2);
 
-  const post = new Post({ name: 'Foo', title: 'bar', slug: 'bar', cuid: 'f34gb2bh24b24b2', content: 'Hello Mern says Foo' });
+  const post = new Post({
+    name: 'Foo',
+    title: 'bar',
+    slug: 'bar',
+    cuid: 'f34gb2bh24b24b5',
+    content: 'Hello Mern says Foo',
+  });
   post.save();
 
   const res = await request(app)
@@ -76,4 +105,3 @@ test.serial('Should correctly delete a post', async t => {
   const queriedPost = await Post.findOne({ cuid: post.cuid }).exec();
   t.is(queriedPost, null);
 });
-
